@@ -2,6 +2,7 @@ import { cache } from "react";
 import type { Weekday } from "@prisma/client";
 import { db } from "./db";
 import { classRank } from "./extraction/normalize";
+import { activateDueRoutines } from "./routineSchedule";
 import { dateFromISO, isoFromDate, toMinutes, WEEKDAYS } from "./time";
 
 export const NOT_AVAILABLE = "Information not available in uploaded document.";
@@ -55,6 +56,7 @@ export function sortClassKeys<T extends { className: string; section: string }>(
 // ------------------------------------------------------------------ routine
 
 export const getActiveRoutine = cache(async () => {
+  await activateDueRoutines();
   return db.routine.findFirst({
     where: { status: "ACTIVE" },
     orderBy: { version: "desc" },

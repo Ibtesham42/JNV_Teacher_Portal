@@ -25,8 +25,8 @@ export default async function AdminDocuments() {
     <div>
       <PageHeader
         title="Uploaded documents"
-        subtitle="Originals are stored unchanged. Archiving hides a document from teachers."
-        actions={<Link href="/admin/upload" className="btn btn-primary">Upload new</Link>}
+        subtitle="Originals are stored unchanged. Archive hides a document from teachers; an archived document can then be deleted for good."
+        actions={<><Link href="/admin/storage" className="btn btn-secondary">Storage & clean-up</Link><Link href="/admin/upload" className="btn btn-primary">Upload new</Link></>}
       />
       {docs.length ? (
         <div className="card overflow-x-auto">
@@ -63,7 +63,10 @@ export default async function AdminDocuments() {
                       <a className="btn btn-secondary btn-sm" href={`/api/documents/${d.id}/file`} target="_blank" rel="noopener noreferrer">View</a>
                       <a className="btn btn-secondary btn-sm" href={`/api/documents/${d.id}/file?download=1`}>Download</a>
                       {d.archived ? (
-                        <ActionButton label="Restore" url={`/api/documents/${d.id}`} method="PATCH" json={{ archived: false }} />
+                        <>
+                          <ActionButton label="Restore" url={`/api/documents/${d.id}`} method="PATCH" json={{ archived: false }} />
+                          <ActionButton label="Delete" variant="danger" url={`/api/documents/${d.id}?permanent=1`} method="DELETE" confirm="Delete this document and its stored file permanently? This cannot be undone." />
+                        </>
                       ) : (
                         <ActionButton label="Archive" url={`/api/documents/${d.id}`} method="DELETE" confirm="Hide this document from teachers? The original file is kept." />
                       )}

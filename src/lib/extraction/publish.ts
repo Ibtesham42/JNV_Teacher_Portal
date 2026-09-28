@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { db } from "../db";
 import { HttpError } from "../security/api";
-import { dateFromISO, weekdayOfISO } from "../time";
+import { dateFromISO, todayISO, weekdayOfISO } from "../time";
 import { normalizeClassName, normalizeKey } from "./normalize";
 import { draftDataSchema, type DraftData, type ValidationResult } from "./schema";
 import { buildTeacherIndex, resolveTeacher, type TeacherLite } from "./teacherMatch";
@@ -25,7 +25,7 @@ export async function validateStoredDraft(documentId: string): Promise<{ data: D
  * Turns the reviewed draft into the live, normalised tables.
  * Nothing is visible to teachers until this runs.
  */
-export async function publishDraft(documentId: string, userId: string) {
+export async function publishDraft(documentId: string, userId: string, opts: { effectiveFrom?: string } = {}) {
   const doc = await db.uploadedDocument.findUnique({ where: { id: documentId }, include: { draft: true } });
   if (!doc || !doc.draft) throw new HttpError(404, "Document not found.");
   if (doc.draft.status !== "REVIEW") throw new HttpError(409, "This document is not waiting for review.");
@@ -85,19 +85,29 @@ export async function publishDraft(documentId: string, userId: string) {
         }
       }
 
-      const result: { routineId?: string; version?: number; counts: Record<string, number> } = { counts: {} };
+      const result: { routineId?: string; version?: number; scheduledFor?: string; counts: Record<string, number> } = { counts: {} };
 
       // 2. routine
       if (data.periods.length) {
         const agg = await tx.routine.aggregate({ _max: { version: true } });
         const version = (agg._max.version ?? 0) + 1;
-        await tx.routine.updateMany({ where: { status: "ACTIVE" }, data: { status: "ARCHIVED", archivedAt: new Date() } });
+        // a future start date keeps today's routine running until that day; otherwise it replaces it now
+        const today = todayISO();
+        const effective = opts.effectiveFrom && opts.effectiveFrom > today ? opts.effectiveFrom : today;
+        const scheduled = effective > today;
+        if (!scheduled) {
+          await tx.routine.updateMany({
+            where: { OR: [{ status: "ACTIVE" }, { status: "SCHEDULED", effectiveFrom: { lte: dateFromISO(today) } }] },
+            data: { status: "ARCHIVED", archivedAt: new Date() },
+          });
+        }
         const routine = await tx.routine.create({
           data: {
             version,
             title: data.title || doc.title,
             session: data.session,
-            status: "ACTIVE",
+            status: scheduled ? "SCHEDULED" : "ACTIVE",
+            effectiveFrom: dateFromISO(effective),
             documentId: doc.id,
             uploadedById: userId,
           },
@@ -155,6 +165,7 @@ export async function publishDraft(documentId: string, userId: string) {
         }
         result.routineId = routine.id;
         result.version = version;
+        if (scheduled) result.scheduledFor = effective;
         result.counts.periods = data.periods.length;
       }
 

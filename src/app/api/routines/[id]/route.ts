@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { dateFromISO, todayISO } from "@/lib/time";
 import { HttpError, parseJson, requireAdmin, route } from "@/lib/security/api";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -17,7 +18,7 @@ export const POST = route<Ctx>(async (req: NextRequest, { params }) => {
   if (act === "activate") {
     await db.$transaction([
       db.routine.updateMany({ where: { status: "ACTIVE" }, data: { status: "ARCHIVED", archivedAt: new Date() } }),
-      db.routine.update({ where: { id }, data: { status: "ACTIVE", archivedAt: null } }),
+      db.routine.update({ where: { id }, data: { status: "ACTIVE", archivedAt: null, effectiveFrom: dateFromISO(todayISO()) } }),
     ]);
   } else {
     await db.routine.update({ where: { id }, data: { status: "ARCHIVED", archivedAt: new Date() } });

@@ -49,6 +49,8 @@ enum ExtractionStatus {
 enum RoutineStatus {
   ACTIVE
   ARCHIVED
+  /// published with a future effective date; switches on automatically that day
+  SCHEDULED
 }
 
 enum ScheduleCategory {
@@ -199,6 +201,8 @@ model Routine {
   title        String
   session      String?
   status       RoutineStatus    @default(ACTIVE)
+  /// first day teachers see this routine
+  effectiveFrom DateTime        @default(now()) @db.Date
   documentId   String?
   document     UploadedDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
   uploadedById String?

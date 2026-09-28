@@ -29,13 +29,13 @@ export default async function DocumentsPage() {
             <ul className="space-y-2">
               {list.map((d) => {
                 const r = d.routines[0];
-                const label = g.key === "ROUTINE" && r ? (r.status === "ACTIVE" ? "Current Routine" : `Previous Routine (v${r.version})`) : null;
+                const label = g.key === "ROUTINE" && r ? (r.status === "ACTIVE" ? "Current Routine" : r.status === "SCHEDULED" ? "Upcoming Routine" : `Previous Routine (v${r.version})`) : null;
                 return (
                   <li key={d.id} className="card card-pad flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-semibold text-slate-900">{d.title}</p>
-                        {label && <Pill tone={r?.status === "ACTIVE" ? "green" : "slate"}>{label}</Pill>}
+                        {label && <Pill tone={r?.status === "ACTIVE" ? "green" : r?.status === "SCHEDULED" ? "blue" : "slate"}>{label}</Pill>}
                       </div>
                       <p className="text-xs text-slate-500">
                         {d.originalName} · {formatBytes(d.sizeBytes)} · {formatDateShort(isoFromDate(d.createdAt))}

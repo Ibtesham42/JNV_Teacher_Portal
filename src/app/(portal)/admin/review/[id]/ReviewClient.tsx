@@ -25,6 +25,11 @@ const emptyDraft = (kind: DraftData["kind"]): DraftData => ({
   notes: [],
 });
 
+/** Today in the school's timezone, as YYYY-MM-DD. */
+function schoolToday(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+}
+
 export default function ReviewClient({
   id,
   classes,
@@ -51,6 +56,7 @@ export default function ReviewClient({
   const [published, setPublished] = useState<{ version?: number; message: string } | null>(null);
   const [compare, setCompare] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [effectiveFrom, setEffectiveFrom] = useState("");
   const [manual, setManual] = useState(false);
 
   const dataRef = useRef<DraftData | null>(null);
@@ -152,15 +158,18 @@ export default function ReviewClient({
       return;
     }
     const replaces = dataRef.current.periods.length > 0 && activeVersion != null;
+    const later = dataRef.current.periods.length > 0 && effectiveFrom && effectiveFrom > schoolToday();
     const ok = window.confirm(
-      replaces
+      later
+        ? `Schedule this routine to start on ${effectiveFrom}? Until then teachers keep seeing the current routine; it switches automatically on that day.`
+        : replaces
         ? `Publish this routine? It becomes the ACTIVE routine for all teachers (replacing version ${activeVersion}, which is kept in the version history).`
         : "Publish this now? It becomes visible to all teachers.",
     );
     if (!ok) return;
     setPublishing(true);
     try {
-      const r = await api<{ message: string; version?: number }>(`/api/extraction/${id}/publish`, { method: "POST", json: { data: dataRef.current } });
+      const r = await api<{ message: string; version?: number }>(`/api/extraction/${id}/publish`, { method: "POST", json: { data: dataRef.current, ...(later ? { effectiveFrom } : {}) } });
       setPublished({ message: r.message, version: r.version });
       setSaveState("saved");
     } catch (e) {
@@ -242,7 +251,11 @@ export default function ReviewClient({
         {Header}
         <div className="card card-pad border-emerald-300 bg-emerald-50">
           <p className="flex items-center gap-2 text-lg font-bold text-emerald-800"><CheckCircle2 className="h-5 w-5" /> {published?.message ?? "Published."}</p>
-          {published?.version && <p className="mt-1 text-sm text-emerald-900">Routine version {published.version} is now ACTIVE. Teachers see it immediately.</p>}
+          {published?.version && (
+            <p className="mt-1 text-sm text-emerald-900">
+              {published.message.startsWith("Routine scheduled") ? `Routine version ${published.version} is scheduled. Teachers keep seeing the current routine until then.` : `Routine version ${published.version} is now ACTIVE. Teachers see it immediately.`}
+            </p>
+          )}
           <div className="mt-4 flex flex-wrap gap-2">
             <Link href="/" className="btn btn-primary">Open the website</Link>
             <Link href="/routine/class" className="btn btn-secondary">View routine</Link>
@@ -377,8 +390,20 @@ export default function ReviewClient({
               <Columns2 className="h-4 w-4" /> {compare ? "Hide original" : "Compare with original"}
             </button>
             <button className="btn btn-secondary" onClick={save} disabled={saveState === "saving"}><Save className="h-4 w-4" /> SAVE DRAFT</button>
+            {data.periods.length > 0 && (
+              <label className="flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700" title="Leave as today to publish now, or pick a future date to schedule it">
+                Effective from
+                <input
+                  type="date"
+                  value={effectiveFrom || schoolToday()}
+                  min={schoolToday()}
+                  onChange={(e) => setEffectiveFrom(e.target.value)}
+                  className="rounded border border-slate-300 bg-white px-2 py-1 text-xs font-normal"
+                />
+              </label>
+            )}
             <button className="btn btn-success" onClick={publish} disabled={publishing || !canPublish} title={canPublish ? "" : "Fix the errors first"}>
-              {publishing && <Loader2 className="h-4 w-4 animate-spin" />} {publishLabel}
+              {publishing && <Loader2 className="h-4 w-4 animate-spin" />} {data.periods.length > 0 && effectiveFrom && effectiveFrom > schoolToday() ? "SCHEDULE ROUTINE" : publishLabel}
             </button>
             <button className="btn btn-secondary" onClick={cancel} disabled={busy || publishing}>CANCEL</button>
           </div>

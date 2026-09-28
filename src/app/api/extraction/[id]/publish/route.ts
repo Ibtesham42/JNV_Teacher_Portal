@@ -8,7 +8,11 @@ import { HttpError, requireAdmin, route } from "@/lib/security/api";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-const body = z.object({ data: draftDataSchema.optional() });
+const body = z.object({
+  data: draftDataSchema.optional(),
+  /** first day teachers see the routine (YYYY-MM-DD); a future date schedules it */
+  effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
 
 /** PUBLISH - saves the latest edits, then makes the routine live for everyone. */
 export const POST = route<Ctx>(async (req: NextRequest, { params }) => {
@@ -22,6 +26,7 @@ export const POST = route<Ctx>(async (req: NextRequest, { params }) => {
       await db.extractionDraft.update({ where: { documentId: id }, data: { data: parsed.data.data as unknown as Prisma.InputJsonValue } });
     }
   }
-  const result = await publishDraft(id, admin.id);
-  return { ok: true, message: "Routine published successfully.", ...result };
+  const result = await publishDraft(id, admin.id, { effectiveFrom: parsed.data.effectiveFrom });
+  const message = result.scheduledFor ? `Routine scheduled. It replaces the current one on ${result.scheduledFor}.` : "Routine published successfully.";
+  return { ok: true, message, ...result };
 });
