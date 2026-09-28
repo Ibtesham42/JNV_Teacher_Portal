@@ -12,6 +12,10 @@ export const config = {
   schoolName: "JAWAHAR NAVODAYA VIDYALAYA",
   schoolAddress: "RYMBAI, EAST JAINTIA HILLS, MEGHALAYA",
   portalName: "Teacher Routine Portal",
+  /** Google Sheet with the Term 1 (2026-27) mark slips and all PWT / Term sheets. */
+  examSheetUrl:
+    process.env.EXAM_SHEET_URL ||
+    "https://docs.google.com/spreadsheets/d/1Vj61zHzuVegLPWV-WrglT0leQE87-qCa/edit?gid=1502158322#gid=1502158322",
   timezone: process.env.SCHOOL_TZ || "Asia/Kolkata",
   /** Classes the school runs (used for validation and the class picker). */
   classes: list(process.env.SCHOOL_CLASSES, ["VI", "VII", "VIII", "IX", "X", "XI", "XII"]),
