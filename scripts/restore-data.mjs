@@ -29,8 +29,26 @@ const order = [
   "routine", "routineClass", "routinePeriod", "modDuty", "weeklyOff", "notice", "remedialSchedule", "clubActivity",
 ];
 
+// accounts that must not be copied (e.g. a local admin with a weak dev password): SKIP_USERNAMES=admin
+const skip = new Set((process.env.SKIP_USERNAMES || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean));
+// records that pointed at a skipped account are re-attributed to the account with the same username in the target
+const remap = new Map();
+if (skip.size) {
+  const skipped = (data.user ?? []).filter((u) => skip.has(String(u.username).toLowerCase()));
+  data.user = (data.user ?? []).filter((u) => !skip.has(String(u.username).toLowerCase()));
+  for (const u of skipped) {
+    const target = await db.user.findUnique({ where: { username: u.username } });
+    remap.set(u.id, target?.id ?? null);
+  }
+}
+const USER_FIELDS = ["uploadedById", "createdById"];
+const relink = (row) => {
+  for (const f of USER_FIELDS) if (f in row && remap.has(row[f])) row[f] = remap.get(row[f]);
+  return row;
+};
+
 for (const model of order) {
-  const rows = (data[model] ?? []).map(revive);
+  const rows = (data[model] ?? []).map(revive).map(relink);
   let added = 0;
   for (let i = 0; i < rows.length; i += 400) {
     const r = await db[model].createMany({ data: rows.slice(i, i + 400), skipDuplicates: true });

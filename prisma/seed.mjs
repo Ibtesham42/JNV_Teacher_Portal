@@ -20,7 +20,7 @@ async function main() {
     console.log(`Admin "${username}" already exists (password left unchanged).`);
   } else {
     const passwordHash = await bcrypt.hash(password, 12);
-    await db.user.create({ data: { username, name, passwordHash, role: "ADMIN", mustChangePassword: false } });
+    await db.user.create({ data: { username, name, passwordHash, role: "ADMIN", mustChangePassword: process.env.ADMIN_MUST_CHANGE === "1" } });
     console.log(`Admin "${username}" created.`);
   }
 }
