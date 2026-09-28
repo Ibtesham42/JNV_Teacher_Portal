@@ -7,6 +7,7 @@ import { draftDataSchema, type DraftData, type ValidationResult } from "./schema
 import { buildTeacherIndex, resolveTeacher, type TeacherLite } from "./teacherMatch";
 import { validateDraft } from "./validate";
 import { parseTeacherText } from "../teacherIdentity";
+import type { RoutineBusy } from "./rosterChecks";
 
 const CODE_START = /^(TGT|PGT|PRT|PET|PPL|PAT|HM|VP)\b/i;
 
@@ -14,11 +15,22 @@ export async function loadTeachers(): Promise<TeacherLite[]> {
   return db.teacher.findMany({ select: { id: true, name: true, code: true, aliases: true, active: true } });
 }
 
+/** The current routine's periods, used to check that a remedial class does not clash with teaching. */
+export async function loadRoutineBusy(data: DraftData): Promise<RoutineBusy[] | undefined> {
+  if (!data.remedial.length) return undefined;
+  const routine = await db.routine.findFirst({ where: { status: "ACTIVE" }, orderBy: { version: "desc" }, select: { id: true } });
+  if (!routine) return undefined;
+  return db.routinePeriod.findMany({
+    where: { routineId: routine.id, isBreak: false },
+    select: { teacherId: true, day: true, isBreak: true, startTime: true, endTime: true },
+  });
+}
+
 export async function validateStoredDraft(documentId: string): Promise<{ data: DraftData; validation: ValidationResult }> {
   const draft = await db.extractionDraft.findUnique({ where: { documentId } });
   if (!draft?.data) throw new HttpError(404, "No extraction data for this document.");
   const data = draftDataSchema.parse(draft.data);
-  return { data, validation: validateDraft(data, await loadTeachers()) };
+  return { data, validation: validateDraft(data, await loadTeachers(), await loadRoutineBusy(data)) };
 }
 
 /**
@@ -33,7 +45,7 @@ export async function publishDraft(documentId: string, userId: string, opts: { e
 
   const data = draftDataSchema.parse(doc.draft.data);
   const teachers = await loadTeachers();
-  const validation = validateDraft(data, teachers);
+  const validation = validateDraft(data, teachers, await loadRoutineBusy(data));
   if (!validation.canPublish) {
     throw new HttpError(422, `Fix ${validation.errors} error(s) before publishing.`, validation.issues.filter((i) => i.severity === "error"));
   }
@@ -167,6 +179,17 @@ export async function publishDraft(documentId: string, userId: string, opts: { e
         result.version = version;
         if (scheduled) result.scheduledFor = effective;
         result.counts.periods = data.periods.length;
+      }
+
+      // generated rosters replace what was planned for the same dates (otherwise two MODs could end up on one day)
+      if (data.generated) {
+        const types = [...(data.generated.replaceMod ? (["MOD"] as const) : []), ...(data.generated.replaceHoliday ? (["HOLIDAY"] as const) : [])];
+        if (types.length) {
+          const del = await tx.modDuty.deleteMany({
+            where: { date: { gte: dateFromISO(data.generated.from), lte: dateFromISO(data.generated.to) }, dutyType: { in: [...types] } },
+          });
+          result.counts.replacedDuties = del.count;
+        }
       }
 
       // 3. MOD duties printed in the document

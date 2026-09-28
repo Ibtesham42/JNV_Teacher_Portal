@@ -28,3 +28,6 @@ export function formatBytes(n: number): string {
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
   return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
+
+/** UploadedDocument.mimeType of a roster made by the generator (there is no file behind it). */
+export const GENERATED_MIME = "application/x-jnv-generated";

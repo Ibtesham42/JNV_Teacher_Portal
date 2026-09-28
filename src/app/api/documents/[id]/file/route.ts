@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { GENERATED_MIME } from "@/lib/common";
 import { storage } from "@/lib/storage";
 import { HttpError, requireUser, route } from "@/lib/security/api";
 
@@ -12,7 +13,7 @@ export const GET = route<Ctx>(async (req, { params }) => {
   const user = await requireUser();
   const { id } = await params;
   const doc = await db.uploadedDocument.findUnique({ where: { id } });
-  if (!doc) throw new HttpError(404, "Document not found.");
+  if (!doc || doc.mimeType === GENERATED_MIME) throw new HttpError(404, "Document not found.");
   if (user.role !== "ADMIN") {
     const visible = !doc.archived && (doc.extractionStatus === "PUBLISHED" || doc.extractionStatus === "NOT_APPLICABLE");
     if (!visible) throw new HttpError(404, "Document not found.");

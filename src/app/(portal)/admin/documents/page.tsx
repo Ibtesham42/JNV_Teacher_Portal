@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import ActionButton from "@/components/ActionButton";
 import { Empty, formatBytes, PageHeader, Pill } from "@/components/ui";
+import { GENERATED_MIME } from "@/lib/common";
 import { db } from "@/lib/db";
 import { failStaleExtractions } from "@/lib/extraction/pipeline";
 import { formatDateShort, isoFromDate } from "@/lib/time";
@@ -43,7 +44,7 @@ export default async function AdminDocuments() {
                 <tr key={d.id} className={d.archived ? "opacity-60" : ""}>
                   <td className="td">
                     <p className="font-semibold text-slate-900">{d.title}</p>
-                    <p className="text-xs text-slate-500">{d.originalName} · {formatBytes(d.sizeBytes)}{d.ocrUsed ? " · OCR" : ""}</p>
+                    <p className="text-xs text-slate-500">{d.mimeType === GENERATED_MIME ? "Generated roster" : `${d.originalName} · ${formatBytes(d.sizeBytes)}${d.ocrUsed ? " · OCR" : ""}`}</p>
                     {d.routines[0] && <p className="text-xs text-slate-500">Routine v{d.routines[0].version} ({d.routines[0].status.toLowerCase()})</p>}
                   </td>
                   <td className="td">{d.kind}</td>
@@ -55,13 +56,17 @@ export default async function AdminDocuments() {
                   <td className="td">{d.uploadedBy?.name ?? "—"}</td>
                   <td className="td">
                     <div className="flex flex-wrap gap-2">
-                      {["REVIEW", "PROCESSING", "QUEUED", "FAILED", "PUBLISHED"].includes(d.extractionStatus) && d.kind !== "NOTICE" && d.kind !== "OTHER" && (
+                      {["REVIEW", "PROCESSING", "QUEUED", "FAILED", "PUBLISHED"].includes(d.extractionStatus) && (d.mimeType === GENERATED_MIME || (d.kind !== "NOTICE" && d.kind !== "OTHER")) && (
                         <Link href={`/admin/review/${d.id}`} className={`btn btn-sm ${d.extractionStatus === "REVIEW" ? "btn-primary" : "btn-secondary"}`}>
                           {d.extractionStatus === "REVIEW" ? "Review" : "Open"}
                         </Link>
                       )}
-                      <a className="btn btn-secondary btn-sm" href={`/api/documents/${d.id}/file`} target="_blank" rel="noopener noreferrer">View</a>
-                      <a className="btn btn-secondary btn-sm" href={`/api/documents/${d.id}/file?download=1`}>Download</a>
+                      {d.mimeType !== GENERATED_MIME && (
+                        <>
+                          <a className="btn btn-secondary btn-sm" href={`/api/documents/${d.id}/file`} target="_blank" rel="noopener noreferrer">View</a>
+                          <a className="btn btn-secondary btn-sm" href={`/api/documents/${d.id}/file?download=1`}>Download</a>
+                        </>
+                      )}
                       {d.archived ? (
                         <>
                           <ActionButton label="Restore" url={`/api/documents/${d.id}`} method="PATCH" json={{ archived: false }} />

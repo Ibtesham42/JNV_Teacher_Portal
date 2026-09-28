@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type { Weekday } from "@prisma/client";
 import { db } from "./db";
+import { GENERATED_MIME } from "./common";
 import { classRank } from "./extraction/normalize";
 import { activateDueRoutines } from "./routineSchedule";
 import { dateFromISO, isoFromDate, toMinutes, WEEKDAYS } from "./time";
@@ -177,6 +178,8 @@ export async function getWeeklyOffByDay() {
 
 export const visibleDocumentWhere = {
   archived: false,
+  // rosters made by the generator have no file to show
+  mimeType: { not: GENERATED_MIME },
   extractionStatus: { in: ["PUBLISHED", "NOT_APPLICABLE"] },
 } as const;
 

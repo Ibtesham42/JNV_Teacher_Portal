@@ -88,6 +88,16 @@ export const draftDataSchema = z.object({
   teacherMap: z.record(z.string(), z.string()).default({}),
   /** free-form notes from the extractor (never edited by hand) */
   notes: z.array(z.string()).default([]),
+  /** set when the roster generator made this draft: publishing replaces the duties in this date range */
+  generated: z
+    .object({
+      from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      replaceMod: z.boolean().default(false),
+      replaceHoliday: z.boolean().default(false),
+    })
+    .nullable()
+    .default(null),
 });
 export type DraftData = z.infer<typeof draftDataSchema>;
 

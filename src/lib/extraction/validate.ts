@@ -4,6 +4,7 @@ import type { DraftData, Issue, ValidationResult } from "./schema";
 import { normalizeClassName } from "./normalize";
 import { buildTeacherIndex, levenshtein, resolveTeacher, type TeacherLite } from "./teacherMatch";
 import { codesEquivalent, parseTeacherText } from "../teacherIdentity";
+import { rosterChecks, type RoutineBusy } from "./rosterChecks";
 
 function collectTeacherNames(d: DraftData): string[] {
   const set = new Set<string>();
@@ -22,7 +23,7 @@ function collectTeacherNames(d: DraftData): string[] {
  * Deterministic checks run after AI/OCR extraction and again after every manual edit.
  * Errors block publishing; warnings are shown for review.
  */
-export function validateDraft(data: DraftData, teachers: TeacherLite[]): ValidationResult {
+export function validateDraft(data: DraftData, teachers: TeacherLite[], routine?: RoutineBusy[]): ValidationResult {
   const issues: Issue[] = [];
   const index = buildTeacherIndex(teachers.filter((t) => t.active));
   const err = (scope: Issue["scope"], itemId: string | undefined, code: string, message: string) =>
@@ -256,6 +257,8 @@ export function validateDraft(data: DraftData, teachers: TeacherLite[]): Validat
     // one general hint per unknown teacher (per-item errors are listed above)
     warn("general", undefined, "teacherHint", `"${name}" needs to be matched to a teacher or created.`);
   }
+
+  rosterChecks(data, resolved, routine, warn);
 
   const errors = issues.filter((i) => i.severity === "error").length;
   const warnings = issues.length - errors;
