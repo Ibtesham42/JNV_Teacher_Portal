@@ -1,6 +1,7 @@
 import Link from "next/link";
 import clsx from "clsx";
 import { Calendar, CalendarOff, ClipboardCheck, FileText, Megaphone, Sun } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
 import TeacherSearch from "@/components/TeacherSearch";
 import { TimetableGrid } from "@/components/Timetable";
 import { DocLinks, Empty, Pill } from "@/components/ui";
@@ -48,12 +49,19 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   return (
     <div className="space-y-6">
       {/* banner */}
-      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 px-5 py-7 text-center text-white shadow-card sm:py-9">
-        <h1 className="text-xl font-extrabold tracking-wide sm:text-3xl">{config.schoolName}</h1>
-        <p className="mt-1 text-xs font-medium tracking-wider text-brand-100 sm:text-sm">{config.schoolAddress}</p>
-        <p className="mx-auto mt-3 inline-block rounded-full bg-white/10 px-4 py-1 text-xs font-bold uppercase tracking-widest text-gold-400 sm:text-sm">
-          {config.portalName}
-        </p>
+      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand-950 via-brand-800 to-brand-600 shadow-card">
+        <div className="h-1.5 bg-gradient-to-r from-gold-500 via-white to-leaf-600" aria-hidden="true" />
+        <div className="flex flex-col items-center gap-4 px-5 py-7 text-center text-white sm:flex-row sm:gap-6 sm:px-8 sm:py-9 sm:text-left">
+          <BrandLogo size="xl" />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gold-400" lang="hi">जवाहर नवोदय विद्यालय, रिम्बाई</p>
+            <h1 className="mt-0.5 text-xl font-extrabold tracking-wide sm:text-3xl">{config.schoolName}</h1>
+            <p className="mt-1 text-xs font-medium tracking-wider text-brand-100 sm:text-sm">{config.schoolAddress}</p>
+            <p className="mt-3 inline-block rounded-full bg-white/10 px-4 py-1 text-xs font-bold uppercase tracking-widest text-gold-400 ring-1 ring-white/20 sm:text-sm">
+              {config.portalName}
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* key facts */}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandLogo, { TricolourBar } from "@/components/BrandLogo";
 import SignOutButton from "@/components/SignOutButton";
 import { config } from "@/lib/config";
 import { pageUser } from "@/lib/session";
@@ -23,9 +24,10 @@ export default async function PortalLayout({ children }: { children: React.React
   return (
     <div className="flex min-h-screen flex-col">
       <header className="bg-brand-900 text-white">
+        <TricolourBar />
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
           <Link href="/" className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/10 text-lg font-black text-gold-400">J</span>
+            <BrandLogo size="md" />
             <span className="min-w-0 leading-tight">
               <span className="block truncate text-sm font-bold tracking-wide sm:text-base">{config.schoolName}</span>
               <span className="block truncate text-[11px] text-brand-200 sm:text-xs">{config.portalName}</span>
@@ -91,8 +93,17 @@ export default async function PortalLayout({ children }: { children: React.React
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6">{children}</main>
 
-      <footer className="border-t border-slate-200 bg-white py-4 text-center text-xs text-slate-500">
-        {config.schoolName}, {config.schoolAddress}
+      <footer className="border-t border-slate-200 bg-white">
+        <TricolourBar />
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-5 text-center sm:flex-row sm:text-left">
+          <BrandLogo size="sm" />
+          <div className="text-xs text-slate-500">
+            <p className="font-semibold text-slate-700">{config.schoolName}</p>
+            <p>{config.schoolAddress}</p>
+            <p className="mt-0.5">Navodaya Vidyalaya Samiti · Ministry of Education, Government of India</p>
+          </div>
+          <p className="text-sm font-semibold text-brand-800 sm:ml-auto" lang="hi">प्रज्ञानं ब्रह्म</p>
+        </div>
       </footer>
     </div>
   );

@@ -18,12 +18,21 @@ const config: Config = {
           900: "#1c306b",
           950: "#132049",
         },
+        // saffron from the NVS emblem (kept under the name "gold" used across the app)
         gold: {
-          50: "#fff9eb",
-          100: "#ffefc6",
-          400: "#f8b93a",
-          500: "#f0980f",
-          600: "#d97406",
+          50: "#fff6ea",
+          100: "#ffe4bf",
+          400: "#f9a03f",
+          500: "#f28a1a",
+          600: "#d96a0b",
+        },
+        // green of the emblem's wheat leaves
+        leaf: {
+          50: "#eefaf0",
+          100: "#d3f1d9",
+          500: "#3a9a4b",
+          600: "#2b7f3b",
+          700: "#23662f",
         },
       },
       fontFamily: {
