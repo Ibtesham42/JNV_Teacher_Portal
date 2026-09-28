@@ -3,7 +3,7 @@ import path from "node:path";
 import type { DocumentKind } from "@prisma/client";
 import { db } from "./db";
 import { storage } from "./storage";
-import { enqueueExtraction } from "./extraction/pipeline";
+import { scheduleExtraction } from "./extraction/pipeline";
 import { validateUpload } from "./security/files";
 
 const EXTRACTABLE: DocumentKind[] = ["ROUTINE", "REMEDIAL", "CLUB"];
@@ -40,6 +40,6 @@ export async function storeDocument(opts: {
   await db.extractionLog.create({
     data: { documentId: doc.id, level: "INFO", stage: "upload", message: `Uploaded ${v.safeName} (${buf.length} bytes).` },
   });
-  if (shouldExtract) enqueueExtraction(doc.id);
+  if (shouldExtract) scheduleExtraction(doc.id);
   return doc;
 }

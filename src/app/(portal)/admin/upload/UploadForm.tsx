@@ -11,9 +11,8 @@ const KINDS = [
   { value: "OTHER", label: "Other official document", extract: false, hint: "Stored and shown under Official Documents. No extraction." },
 ] as const;
 
-const MAX_MB = 25;
 
-export default function UploadForm({ initialKind, aiEnabled, groqEnabled }: { initialKind?: string; aiEnabled: boolean; groqEnabled: boolean }) {
+export default function UploadForm({ initialKind, aiEnabled, groqEnabled, maxMb }: { initialKind?: string; aiEnabled: boolean; groqEnabled: boolean; maxMb: number }) {
   const router = useRouter();
   const [kind, setKind] = useState<string>(KINDS.some((k) => k.value === initialKind) ? initialKind! : "ROUTINE");
   const [file, setFile] = useState<File | null>(null);
@@ -29,7 +28,7 @@ export default function UploadForm({ initialKind, aiEnabled, groqEnabled }: { in
     setError("");
     if (!f) return;
     if (!/\.(pdf|jpe?g|png|docx?)$/i.test(f.name)) return setError("Unsupported file type. Upload PDF, JPG, PNG, DOC or DOCX.");
-    if (f.size > MAX_MB * 1024 * 1024) return setError(`File is too large (max ${MAX_MB} MB).`);
+    if (f.size > maxMb * 1024 * 1024) return setError(`File is too large (max ${maxMb} MB).`);
     setFile(f);
   }
 
@@ -88,7 +87,7 @@ export default function UploadForm({ initialKind, aiEnabled, groqEnabled }: { in
         ) : (
           <>
             <p className="text-sm font-semibold text-slate-800">Tap to choose a file, or drop it here</p>
-            <p className="text-xs text-slate-500">PDF, JPG, PNG, DOC, DOCX · up to {MAX_MB} MB</p>
+            <p className="text-xs text-slate-500">PDF, JPG, PNG, DOC, DOCX · up to {maxMb} MB</p>
           </>
         )}
         <input ref={input} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={(e) => pick(e.target.files?.[0])} />

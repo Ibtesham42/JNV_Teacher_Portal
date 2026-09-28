@@ -17,7 +17,9 @@
     "db:studio": "prisma studio",
     "sample": "node scripts/make-sample.mjs",
     "e2e": "node scripts/e2e.mjs",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && DATABASE_URL=\"${DIRECT_URL:-$DATABASE_URL}\" prisma migrate deploy && next build",
+    "db:restore": "node scripts/restore-data.mjs"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"

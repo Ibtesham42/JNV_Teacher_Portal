@@ -17,6 +17,7 @@ export const config = {
   classes: list(process.env.SCHOOL_CLASSES, ["VI", "VII", "VIII", "IX", "X", "XI", "XII"]),
   sections: list(process.env.SCHOOL_SECTIONS, ["A", "B", "C", "D", "E", "F"]),
   maxPeriodNumber: 12,
+  /** Vercel rejects request bodies over ~4.5 MB, so set MAX_UPLOAD_MB=4 there. */
   maxUploadBytes: Math.max(1, Number(process.env.MAX_UPLOAD_MB || 25)) * 1024 * 1024,
   storageDir: path.resolve(process.env.STORAGE_DIR || "./.data/uploads"),
   tessDataDir: path.resolve(process.env.TESSDATA_DIR || "./.data/tessdata"),

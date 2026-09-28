@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { Prisma } from "@prisma/client";
 import { db } from "../db";
 import { storage } from "../storage";
@@ -283,4 +284,24 @@ export async function failStaleExtractions(): Promise<void> {
     });
     await db.uploadedDocument.update({ where: { id: s.documentId }, data: { extractionStatus: "FAILED" } });
   }
+}
+
+/**
+ * Starts extraction after the HTTP response has been sent.
+ * - Vercel: `after()` keeps the function alive until it finishes (bounded by the route's maxDuration).
+ * - Own server / Docker: the in-process queue.
+ */
+export function scheduleExtraction(documentId: string): void {
+  if (process.env.VERCEL) {
+    try {
+      after(async () => {
+        await processDocument(documentId);
+        await shutdownOcr().catch(() => {});
+      });
+      return;
+    } catch {
+      /* not inside a request - fall through to the queue */
+    }
+  }
+  enqueueExtraction(documentId);
 }

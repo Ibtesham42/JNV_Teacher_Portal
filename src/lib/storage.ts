@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "./config";
+import { db } from "./db";
 
 /**
  * File storage abstraction. The default backend writes to a local directory
@@ -36,4 +37,23 @@ class LocalStorage implements FileStorage {
   }
 }
 
-export const storage: FileStorage = new LocalStorage();
+/** Keeps originals in PostgreSQL (bytea). Private, transactional with the rest of the data, no extra service. */
+class DbStorage implements FileStorage {
+  async put(key: string, data: Buffer) {
+    if (!KEY_RE.test(key)) throw new Error("Invalid storage key");
+    await db.storedFile.create({ data: { key, data: new Uint8Array(data) } }); // fails if the key exists: originals are never overwritten
+  }
+  async get(key: string) {
+    if (!KEY_RE.test(key)) throw new Error("Invalid storage key");
+    const row = await db.storedFile.findUnique({ where: { key } });
+    if (!row) throw new Error("File not found");
+    return Buffer.from(row.data);
+  }
+  async remove(key: string) {
+    if (!KEY_RE.test(key)) throw new Error("Invalid storage key");
+    await db.storedFile.deleteMany({ where: { key } });
+  }
+}
+
+/** STORAGE_DRIVER=db on Vercel; a local directory (default) on a server / Docker. */
+export const storage: FileStorage = process.env.STORAGE_DRIVER === "db" ? new DbStorage() : new LocalStorage();

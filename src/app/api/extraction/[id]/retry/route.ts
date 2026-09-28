@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
-import { enqueueExtraction } from "@/lib/extraction/pipeline";
+import { scheduleExtraction } from "@/lib/extraction/pipeline";
 import { HttpError, requireAdmin, route } from "@/lib/security/api";
+
+export const runtime = "nodejs";
+export const maxDuration = 300;
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -20,6 +23,6 @@ export const POST = route<Ctx>(async (_req, { params }) => {
   });
   await db.uploadedDocument.update({ where: { id }, data: { extractionStatus: "QUEUED" } });
   await db.extractionLog.create({ data: { documentId: id, level: "INFO", stage: "retry", message: "Extraction restarted by admin." } });
-  enqueueExtraction(id);
+  scheduleExtraction(id);
   return { ok: true };
 });

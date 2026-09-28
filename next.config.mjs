@@ -30,6 +30,16 @@ const nextConfig = {
     "bcryptjs",
     "@prisma/client",
   ],
+  // native / wasm files that are loaded at run time and would otherwise be missed by Vercel's bundle tracing
+  outputFileTracingIncludes: {
+    "/api/**/*": [
+      "./node_modules/tesseract.js/**/*",
+      "./node_modules/tesseract.js-core/**/*",
+      "./node_modules/@napi-rs/canvas*/**/*",
+      "./node_modules/pdfjs-dist/legacy/build/**/*",
+      "./node_modules/.prisma/client/**/*",
+    ],
+  },
   experimental: {
     serverActions: { bodySizeLimit: "30mb" },
   },

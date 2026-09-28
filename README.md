@@ -6,6 +6,8 @@ Jawahar Navodaya Vidyalaya, Rymbai — a real, working web app in which an admin
 
 Next.js 15 (App Router) · TypeScript · Tailwind CSS · PostgreSQL + Prisma · Auth.js (credentials, JWT) · Zod · Tesseract.js (OCR) · pdf.js · sharp · mammoth · optional Claude vision extraction.
 
+> **Free hosting:** see [DEPLOY_VERCEL.md](DEPLOY_VERCEL.md) (Vercel + Neon).
+
 ## Quick start (development)
 
 ```bash
