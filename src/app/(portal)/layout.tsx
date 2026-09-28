@@ -47,7 +47,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
           <div className="ml-auto flex items-center gap-2 md:ml-0">
             <span className="hidden text-right text-xs leading-tight sm:block">
-              <span className="block font-semibold">{user.name}</span>
+              <Link href="/change-password" className="block font-semibold hover:underline" title="Change password">{user.name}</Link>
               <span className="flex items-center justify-end gap-1 text-brand-200">
                 {user.role === "ADMIN" && <ShieldCheck className="h-3 w-3" />}
                 {user.role === "ADMIN" ? "Administrator" : "Teacher"}

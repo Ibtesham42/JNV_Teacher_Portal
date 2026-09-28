@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { KeyRound, Pencil, Plus, UserCheck, UserX } from "lucide-react";
 import { api } from "@/lib/apiClient";
+import PasswordField from "@/components/PasswordField";
 
 type T = { id: string; name: string; code: string | null; designation: string | null; phone: string | null; aliases: string[]; active: boolean; username: string | null };
 
@@ -215,8 +216,8 @@ function LoginRow({ t, onDone, run, busy }: { t: T; onDone: () => void; run: Run
   return (
     <form onSubmit={submit} className="grid items-end gap-2 sm:grid-cols-5">
       <div><label className="label">Username</label><input name="username" defaultValue={t.username ?? t.name.toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "")} className="input" required minLength={3} /></div>
-      <div><label className="label">{t.username ? "New password" : "Temporary password"}</label><input name="password" type="text" className="input" required minLength={8} autoComplete="off" /></div>
-      <label className="flex items-center gap-2 pb-2 text-sm text-slate-600"><input type="checkbox" name="must" defaultChecked /> Must change at first sign-in</label>
+      <div><label className="label">{t.username ? "New password" : "Password"}</label><PasswordField name="password" showByDefault required minLength={8} autoComplete="off" /></div>
+      <label className="flex items-center gap-2 pb-2 text-sm text-slate-600"><input type="checkbox" name="must" /> Force a password change at first sign-in</label>
       <div className="flex gap-2 sm:col-span-2">
         <button className="btn btn-primary btn-sm" disabled={busy}>{t.username ? "Reset password" : "Create login"}</button>
         <button type="button" className="btn btn-secondary btn-sm" onClick={onDone}>Cancel</button>

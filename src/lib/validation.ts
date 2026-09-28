@@ -26,7 +26,7 @@ export const accountInput = z.object({
     .max(40)
     .regex(/^[a-z0-9._-]+$/, "Letters, numbers, dot, dash and underscore only"),
   password: z.string().min(8, "At least 8 characters").max(100),
-  mustChangePassword: z.boolean().default(true),
+  mustChangePassword: z.boolean().default(false),
 });
 
 export const passwordChange = z.object({

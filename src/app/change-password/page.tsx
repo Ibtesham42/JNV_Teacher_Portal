@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { api } from "@/lib/apiClient";
+import PasswordField from "@/components/PasswordField";
 
 export default function ChangePasswordPage() {
   const [error, setError] = useState("");
@@ -33,15 +34,15 @@ export default function ChangePasswordPage() {
         </div>
         <div>
           <label className="label" htmlFor="currentPassword">Current password</label>
-          <input id="currentPassword" name="currentPassword" type="password" className="input" required autoComplete="current-password" />
+          <PasswordField id="currentPassword" name="currentPassword" required autoComplete="current-password" />
         </div>
         <div>
           <label className="label" htmlFor="newPassword">New password</label>
-          <input id="newPassword" name="newPassword" type="password" className="input" required minLength={8} autoComplete="new-password" />
+          <PasswordField id="newPassword" name="newPassword" required minLength={8} autoComplete="new-password" />
         </div>
         <div>
           <label className="label" htmlFor="confirm">Confirm new password</label>
-          <input id="confirm" name="confirm" type="password" className="input" required minLength={8} autoComplete="new-password" />
+          <PasswordField id="confirm" name="confirm" required minLength={8} autoComplete="new-password" />
         </div>
         {error && <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
         <button className="btn btn-primary w-full" disabled={busy}>Change password</button>

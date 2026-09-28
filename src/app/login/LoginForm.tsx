@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { authenticate } from "./actions";
 import { Loader2 } from "lucide-react";
+import PasswordField from "@/components/PasswordField";
 
 export default function LoginForm({ next }: { next: string }) {
   const [error, action, pending] = useActionState(authenticate, undefined);
@@ -15,7 +16,7 @@ export default function LoginForm({ next }: { next: string }) {
       </div>
       <div>
         <label htmlFor="password" className="label">Password</label>
-        <input id="password" name="password" type="password" className="input" autoComplete="current-password" required maxLength={200} />
+        <PasswordField id="password" name="password" autoComplete="current-password" required maxLength={200} />
       </div>
       {error && (
         <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
