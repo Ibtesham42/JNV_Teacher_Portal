@@ -1,0 +1,358 @@
+// JNV Teacher Routine Portal - database schema (PostgreSQL)
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- enums
+
+enum Role {
+  ADMIN
+  TEACHER
+}
+
+enum Weekday {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum DocumentKind {
+  ROUTINE
+  REMEDIAL
+  CLUB
+  NOTICE
+  OTHER
+}
+
+/// Lifecycle of the extraction draft attached to an uploaded document.
+enum ExtractionStatus {
+  NOT_APPLICABLE // documents that are stored only (notices, other)
+  QUEUED
+  PROCESSING
+  REVIEW // extracted, waiting for the admin
+  FAILED
+  PUBLISHED
+  CANCELLED
+}
+
+enum RoutineStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ScheduleCategory {
+  REMEDIAL
+  LIFE_SKILL
+  ENRICHMENT
+  OTHER
+}
+
+enum NoticePriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum LogLevel {
+  INFO
+  WARN
+  ERROR
+}
+
+// ---------------------------------------------------------------- people
+
+model User {
+  id                 String   @id @default(cuid())
+  username           String   @unique
+  name               String
+  email              String?
+  passwordHash       String
+  role               Role     @default(TEACHER)
+  active             Boolean  @default(true)
+  mustChangePassword Boolean  @default(false)
+  teacherId          String?  @unique
+  teacher            Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  lastLoginAt        DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  uploads   UploadedDocument[]
+  routines  Routine[]
+  notices   Notice[]
+}
+
+model Teacher {
+  id          String   @id @default(cuid())
+  name        String
+  /// Short code / designation used in the routine, e.g. "TGT-SCI". Not unique.
+  code        String?
+  designation String?
+  /// Other spellings that appear in official documents.
+  aliases     String[] @default([])
+  phone       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user       User?
+  periods    RoutinePeriod[]
+  modDuties  ModDuty[]
+  weeklyOffs WeeklyOff[]
+  remedials  RemedialSchedule[]
+
+  @@index([name])
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  periods RoutinePeriod[]
+}
+
+/// Working days seen in published routines.
+model SchoolDay {
+  day       Weekday @id
+  isWorking Boolean @default(true)
+}
+
+// ---------------------------------------------------------------- documents
+
+model UploadedDocument {
+  id               String           @id @default(cuid())
+  kind             DocumentKind
+  title            String
+  originalName     String
+  mimeType         String
+  sizeBytes        Int
+  /// Opaque key inside the storage backend (never user supplied).
+  storageKey       String           @unique
+  sha256           String
+  pageCount        Int?
+  ocrUsed          Boolean          @default(false)
+  extractionStatus ExtractionStatus @default(NOT_APPLICABLE)
+  archived         Boolean          @default(false)
+  uploadedById     String?
+  uploadedBy       User?            @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  draft      ExtractionDraft?
+  logs       ExtractionLog[]
+  routines   Routine[]
+  notices    Notice[]
+  remedials  RemedialSchedule[]
+  clubs      ClubActivity[]
+
+  @@index([kind, createdAt])
+}
+
+/// Editable extraction result. `data` follows the DraftData zod schema.
+model ExtractionDraft {
+  id         String           @id @default(cuid())
+  documentId String           @unique
+  document   UploadedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  status     ExtractionStatus @default(QUEUED)
+  stage      String           @default("Queued")
+  progress   Int              @default(0)
+  provider   String?
+  data       Json?
+  /// Raw text found in the document (text layer and/or OCR) for reference.
+  rawText    String?          @db.Text
+  ocrConfidence Float?
+  errorMessage String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+model ExtractionLog {
+  id         String           @id @default(cuid())
+  documentId String
+  document   UploadedDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  level      LogLevel         @default(INFO)
+  stage      String
+  message    String
+  meta       Json?
+  createdAt  DateTime         @default(now())
+
+  @@index([documentId, createdAt])
+}
+
+// ---------------------------------------------------------------- routine
+
+model Routine {
+  id           String           @id @default(cuid())
+  version      Int              @unique
+  title        String
+  session      String?
+  status       RoutineStatus    @default(ACTIVE)
+  documentId   String?
+  document     UploadedDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  uploadedById String?
+  uploadedBy   User?            @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  notes        String?
+  publishedAt  DateTime         @default(now())
+  archivedAt   DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  classes RoutineClass[]
+  periods RoutinePeriod[]
+
+  @@index([status])
+}
+
+model RoutineClass {
+  id        String  @id @default(cuid())
+  routineId String
+  routine   Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  className String
+  section   String  @default("")
+
+  periods RoutinePeriod[]
+
+  @@unique([routineId, className, section])
+}
+
+model RoutinePeriod {
+  id             String       @id @default(cuid())
+  routineId      String
+  routine        Routine      @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  routineClassId String
+  routineClass   RoutineClass @relation(fields: [routineClassId], references: [id], onDelete: Cascade)
+  className      String
+  section        String       @default("")
+  day            Weekday
+  /// Column position within the day (breaks included) - used for ordering.
+  slot           Int
+  /// Period number as printed; null for breaks.
+  periodNumber   Int?
+  isBreak        Boolean      @default(false)
+  label          String?
+  startTime      String?
+  endTime        String?
+  subject        String       @default("")
+  subjectId      String?
+  subjectRef     Subject?     @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  teacherId      String?
+  teacher        Teacher?     @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  /// Teacher text exactly as read from the document.
+  teacherName    String       @default("")
+  room           String?
+  confidence     Float?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([routineId, className, section, day])
+  @@index([routineId, teacherId, day])
+}
+
+// ---------------------------------------------------------------- MOD / weekly off
+
+model ModDuty {
+  id              String    @id @default(cuid())
+  date            DateTime  @db.Date
+  day             Weekday
+  teacherId       String
+  teacher         Teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherName     String
+  dutyDescription String?
+  /// MOD = master on duty; HOLIDAY = Sunday / holiday duty (house, supervised study ...)
+  dutyType        DutyType  @default(MOD)
+  /// House / class details of a holiday duty, and the compensatory weekly-off date printed next to it.
+  house           String?
+  classes         String?
+  offDate         DateTime? @db.Date
+  documentId      String?
+  createdAt       DateTime  @default(now())
+
+  @@unique([date, teacherId, dutyType])
+  @@index([date])
+  @@map("MODDuty")
+}
+
+enum DutyType {
+  MOD
+  HOLIDAY
+}
+
+model WeeklyOff {
+  id         String   @id @default(cuid())
+  teacherId  String
+  teacher    Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  day        Weekday
+  documentId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([teacherId, day])
+  @@index([day])
+}
+
+// ---------------------------------------------------------------- notices
+
+model Notice {
+  id           String           @id @default(cuid())
+  title        String
+  description  String           @db.Text
+  date         DateTime         @default(now()) @db.Date
+  priority     NoticePriority   @default(NORMAL)
+  documentId   String?
+  document     UploadedDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  createdById  String?
+  createdBy    User?            @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  archived     Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([archived, date])
+}
+
+// ---------------------------------------------------------------- remedial / clubs
+
+model RemedialSchedule {
+  id          String           @id @default(cuid())
+  category    ScheduleCategory @default(REMEDIAL)
+  className   String
+  section     String           @default("")
+  day         Weekday?
+  startTime   String?
+  endTime     String?
+  activity    String
+  teacherId   String?
+  teacher     Teacher?         @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  teacherName String           @default("")
+  active      Boolean          @default(true)
+  documentId  String?
+  document    UploadedDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  createdAt   DateTime         @default(now())
+
+  @@index([active, className])
+}
+
+model ClubActivity {
+  id         String   @id @default(cuid())
+  name       String
+  /// Teacher names (as written / resolved) attached to the club.
+  members    String[] @default([])
+  activities String[] @default([])
+  active     Boolean  @default(true)
+  documentId String?
+  document   UploadedDocument? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+
+  @@index([active])
+}
