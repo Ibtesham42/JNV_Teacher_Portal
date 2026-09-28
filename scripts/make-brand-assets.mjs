@@ -25,3 +25,15 @@ await icon(512, "public/icon-512.png", 0.1);
 // a smaller logo for the header (keeps pages light)
 await sharp(src).resize({ height: 176 }).png({ compressionLevel: 9 }).toFile("public/nvs-logo-sm.png");
 console.log("wrote public/nvs-logo-sm.png");
+
+// PWA icons: 192 + a "maskable" 512 (logo kept inside the central safe zone on a white square)
+await icon(192, "public/icon-192.png", 0.1);
+{
+  const size = 512;
+  const logo = await sharp(src).resize({ width: Math.round(size * 0.6), height: Math.round(size * 0.6), fit: "inside" }).toBuffer();
+  await sharp({ create: { width: size, height: size, channels: 4, background: "#ffffff" } })
+    .composite([{ input: logo, gravity: "centre" }])
+    .png()
+    .toFile("public/icon-maskable-512.png");
+  console.log("wrote public/icon-maskable-512.png");
+}

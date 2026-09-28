@@ -35,6 +35,6 @@ export default auth((req) => {
 });
 
 export const config = {
-  // public static files (logo, icons) must load on the login page
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|ico|webp)$).*)"],
+  // public static files (logo, icons) and the PWA files (manifest, service worker) must load before sign-in
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|offline\\.html|.*\\.(?:png|jpg|jpeg|svg|ico|webp)$).*)"],
 };

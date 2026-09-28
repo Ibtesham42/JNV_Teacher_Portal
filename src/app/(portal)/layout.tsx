@@ -25,7 +25,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="bg-brand-900 text-white">
+      <header className="bg-brand-900 pt-[env(safe-area-inset-top)] text-white">
         <TricolourBar />
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
           <Link href="/" className="flex min-w-0 items-center gap-3">
