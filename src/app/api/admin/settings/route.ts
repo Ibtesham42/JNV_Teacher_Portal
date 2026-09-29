@@ -1,15 +1,13 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { logActivity } from "@/lib/audit";
-import { HttpError, parseJson, requireAdmin, route } from "@/lib/security/api";
+import { requireAdmin, parseJson, route } from "@/lib/security/api";
+import { getSchoolSettings, SETTINGS_ID } from "@/lib/settings";
 import { schoolSettingsPatch } from "@/lib/validation";
-
-const SETTINGS_ID = "singleton";
 
 export const GET = route(async () => {
   await requireAdmin();
-  const settings = await db.schoolSettings.findUnique({ where: { id: SETTINGS_ID } });
-  if (!settings) throw new HttpError(404, "School settings are missing. Run scripts/backfill-settings.mjs.");
+  const settings = await getSchoolSettings();
   return { settings };
 });
 
@@ -17,8 +15,7 @@ export const GET = route(async () => {
 export const PATCH = route(async (req: NextRequest) => {
   const admin = await requireAdmin();
   const input = await parseJson(req, schoolSettingsPatch);
-  const before = await db.schoolSettings.findUnique({ where: { id: SETTINGS_ID } });
-  if (!before) throw new HttpError(404, "School settings are missing. Run scripts/backfill-settings.mjs.");
+  const before = await getSchoolSettings();
 
   const classes = input.classes ? [...new Set(input.classes.map((c) => c.trim().toUpperCase()).filter(Boolean))] : undefined;
   const sections = input.sections ? [...new Set(input.sections.map((s) => s.trim().toUpperCase()).filter(Boolean))] : undefined;
