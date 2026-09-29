@@ -6,7 +6,7 @@ import TeacherSearch from "@/components/TeacherSearch";
 import { TimetableGrid } from "@/components/Timetable";
 import { DocLinks, Empty, Pill } from "@/components/ui";
 import { db } from "@/lib/db";
-import { config } from "@/lib/config";
+import { getSchoolSettings } from "@/lib/settings";
 import {
   classLabel, getActiveRoutine, getDayPeriods, getLatestNotices, getModForDate, getHolidayDutyForDate, getDatedWeeklyOffs, getOfficialDocuments,
   getRoutineClasses, getWeeklyOffByDay, NOT_AVAILABLE,
@@ -24,6 +24,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const iso = todayISO();
   const today = todayWeekday();
 
+  const school = await getSchoolSettings();
   const routine = await getActiveRoutine();
   const [mod, totalMod, offByDay, notices, docs, classes, holidayToday, datedOffs] = await Promise.all([
     getModForDate(iso),
@@ -55,10 +56,10 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           <BrandLogo size="xl" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gold-400" lang="hi">जवाहर नवोदय विद्यालय, रिम्बाई</p>
-            <h1 className="mt-0.5 text-xl font-extrabold tracking-wide sm:text-3xl">{config.schoolName}</h1>
-            <p className="mt-1 text-xs font-medium tracking-wider text-brand-100 sm:text-sm">{config.schoolAddress}</p>
+            <h1 className="mt-0.5 text-xl font-extrabold tracking-wide sm:text-3xl">{school.schoolName}</h1>
+            <p className="mt-1 text-xs font-medium tracking-wider text-brand-100 sm:text-sm">{school.schoolAddress}</p>
             <p className="mt-3 inline-block rounded-full bg-white/10 px-4 py-1 text-xs font-bold uppercase tracking-widest text-gold-400 ring-1 ring-white/20 sm:text-sm">
-              {config.portalName}
+              {school.portalName}
             </p>
           </div>
         </div>

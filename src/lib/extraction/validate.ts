@@ -19,11 +19,19 @@ function collectTeacherNames(d: DraftData): string[] {
   return [...set];
 }
 
+export type SchoolLists = { classes: string[]; sections: string[] };
+
+/** Only used as a fallback when a caller (tests) does not pass real SchoolSettings. */
+export const DEFAULT_SCHOOL_LISTS: SchoolLists = {
+  classes: ["VI", "VII", "VIII", "IX", "X", "XI", "XII"],
+  sections: ["A", "B", "C", "D", "E", "F"],
+};
+
 /**
  * Deterministic checks run after AI/OCR extraction and again after every manual edit.
  * Errors block publishing; warnings are shown for review.
  */
-export function validateDraft(data: DraftData, teachers: TeacherLite[], routine?: RoutineBusy[]): ValidationResult {
+export function validateDraft(data: DraftData, teachers: TeacherLite[], routine?: RoutineBusy[], school: SchoolLists = DEFAULT_SCHOOL_LISTS): ValidationResult {
   const issues: Issue[] = [];
   const index = buildTeacherIndex(teachers.filter((t) => t.active));
   const err = (scope: Issue["scope"], itemId: string | undefined, code: string, message: string) =>
@@ -95,10 +103,10 @@ export function validateDraft(data: DraftData, teachers: TeacherLite[], routine?
   for (const p of data.periods) {
     const where = `${p.className}${p.section ? "-" + p.section : ""} ${p.day.toLowerCase()}`;
     const cn = normalizeClassName(p.className);
-    if (!cn || !config.classes.includes(cn)) {
+    if (!cn || !school.classes.includes(cn)) {
       err("period", p.id, "class", `"${p.className}" is not a valid class (${where}).`);
     }
-    if (p.section && !config.sections.includes(p.section.toUpperCase())) {
+    if (p.section && !school.sections.includes(p.section.toUpperCase())) {
       err("period", p.id, "section", `Section "${p.section}" is not valid (${where}).`);
     }
     if (!p.isBreak) {
@@ -223,7 +231,7 @@ export function validateDraft(data: DraftData, teachers: TeacherLite[], routine?
   // ---- remedial
   for (const r of data.remedial) {
     const cn = normalizeClassName(r.className);
-    if (!cn || !config.classes.includes(cn)) err("remedial", r.id, "class", `"${r.className}" is not a valid class.`);
+    if (!cn || !school.classes.includes(cn)) err("remedial", r.id, "class", `"${r.className}" is not a valid class.`);
     if (!r.activity.trim()) warn("remedial", r.id, "activity", "Activity missing.");
     if (r.startTime && !isClock(r.startTime)) err("remedial", r.id, "time", "Invalid start time.");
     if (r.endTime && !isClock(r.endTime)) err("remedial", r.id, "time", "Invalid end time.");

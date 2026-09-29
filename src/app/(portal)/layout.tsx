@@ -2,7 +2,7 @@ import Link from "next/link";
 import BrandLogo, { TricolourBar } from "@/components/BrandLogo";
 import { DesktopNav, MobileNav } from "@/components/PortalNav";
 import SignOutButton from "@/components/SignOutButton";
-import { config } from "@/lib/config";
+import { getSchoolSettings } from "@/lib/settings";
 import { pageUser } from "@/lib/session";
 import { Search, ShieldCheck } from "lucide-react";
 
@@ -21,6 +21,7 @@ const NAV = [
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const user = await pageUser();
+  const school = await getSchoolSettings();
   const links = user.role === "ADMIN" ? [...NAV, { href: "/admin", label: "Admin" }] : NAV;
 
   return (
@@ -31,8 +32,8 @@ export default async function PortalLayout({ children }: { children: React.React
           <Link href="/" className="flex min-w-0 items-center gap-3">
             <BrandLogo size="md" />
             <span className="min-w-0 leading-tight">
-              <span className="block truncate text-sm font-bold tracking-wide sm:text-base">{config.schoolName}</span>
-              <span className="block truncate text-[11px] text-brand-200 sm:text-xs">{config.portalName}</span>
+              <span className="block truncate text-sm font-bold tracking-wide sm:text-base">{school.schoolName}</span>
+              <span className="block truncate text-[11px] text-brand-200 sm:text-xs">{school.portalName}</span>
             </span>
           </Link>
 
@@ -76,8 +77,8 @@ export default async function PortalLayout({ children }: { children: React.React
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-5 text-center sm:flex-row sm:text-left">
           <BrandLogo size="sm" />
           <div className="text-xs text-slate-500">
-            <p className="font-semibold text-slate-700">{config.schoolName}</p>
-            <p>{config.schoolAddress}</p>
+            <p className="font-semibold text-slate-700">{school.schoolName}</p>
+            <p>{school.schoolAddress}</p>
             <p className="mt-0.5">Navodaya Vidyalaya Samiti · Ministry of Education, Government of India</p>
           </div>
           <p className="text-sm font-semibold text-brand-800 sm:ml-auto" lang="hi">प्रज्ञानं ब्रह्म</p>

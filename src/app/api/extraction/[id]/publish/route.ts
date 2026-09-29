@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { draftDataSchema } from "@/lib/extraction/schema";
 import { publishDraft } from "@/lib/extraction/publish";
 import { HttpError, requireAdmin, route } from "@/lib/security/api";
+import { logActivity } from "@/lib/audit";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -28,5 +29,14 @@ export const POST = route<Ctx>(async (req: NextRequest, { params }) => {
   }
   const result = await publishDraft(id, admin.id, { effectiveFrom: parsed.data.effectiveFrom });
   const message = result.scheduledFor ? `Routine scheduled. It replaces the current one on ${result.scheduledFor}.` : "Routine published successfully.";
+  if (result.version) {
+    await logActivity(admin, {
+      action: "routine.publish",
+      entityType: "Routine",
+      entityId: result.routineId,
+      summary: `Published routine v${result.version}${result.scheduledFor ? ` (scheduled for ${result.scheduledFor})` : ""}.`,
+      newValue: result.counts,
+    });
+  }
   return { ok: true, message, ...result };
 });

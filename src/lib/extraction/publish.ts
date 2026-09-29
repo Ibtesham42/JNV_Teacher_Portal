@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { db } from "../db";
 import { HttpError } from "../security/api";
+import { getSchoolSettings } from "../settings";
 import { dateFromISO, todayISO, weekdayOfISO } from "../time";
 import { normalizeClassName, normalizeKey } from "./normalize";
 import { draftDataSchema, type DraftData, type ValidationResult } from "./schema";
@@ -30,7 +31,8 @@ export async function validateStoredDraft(documentId: string): Promise<{ data: D
   const draft = await db.extractionDraft.findUnique({ where: { documentId } });
   if (!draft?.data) throw new HttpError(404, "No extraction data for this document.");
   const data = draftDataSchema.parse(draft.data);
-  return { data, validation: validateDraft(data, await loadTeachers(), await loadRoutineBusy(data)) };
+  const school = await getSchoolSettings();
+  return { data, validation: validateDraft(data, await loadTeachers(), await loadRoutineBusy(data), school) };
 }
 
 /**
@@ -45,7 +47,8 @@ export async function publishDraft(documentId: string, userId: string, opts: { e
 
   const data = draftDataSchema.parse(doc.draft.data);
   const teachers = await loadTeachers();
-  const validation = validateDraft(data, teachers, await loadRoutineBusy(data));
+  const school = await getSchoolSettings();
+  const validation = validateDraft(data, teachers, await loadRoutineBusy(data), school);
   if (!validation.canPublish) {
     throw new HttpError(422, `Fix ${validation.errors} error(s) before publishing.`, validation.issues.filter((i) => i.severity === "error"));
   }

@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
+import { logActivity } from "@/lib/audit";
 import { storeDocument } from "@/lib/documents";
 import { HttpError, requireAdmin, requireUser, route } from "@/lib/security/api";
 import { UploadError } from "@/lib/security/files";
@@ -50,5 +51,6 @@ export const POST = route(async (req: NextRequest) => {
       createdById: admin.id,
     },
   });
+  await logActivity(admin, { action: "notice.create", entityType: "Notice", entityId: notice.id, summary: `Posted notice "${notice.title}".`, newValue: notice });
   return { notice: { ...notice, date: isoFromDate(notice.date) } };
 });

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui";
 import { db } from "@/lib/db";
-import { config } from "@/lib/config";
+import { getSchoolSettings } from "@/lib/settings";
 import { getClubs, getRemedial } from "@/lib/queries";
 import SchedulesManager from "./SchedulesManager";
 
@@ -10,10 +10,11 @@ export const metadata: Metadata = { title: "Clubs & remedial" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminSchedules() {
-  const [clubs, remedial, teachers] = await Promise.all([
+  const [clubs, remedial, teachers, school] = await Promise.all([
     getClubs(),
     getRemedial(),
     db.teacher.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
+    getSchoolSettings(),
   ]);
   return (
     <div>
@@ -28,8 +29,8 @@ export default async function AdminSchedules() {
         }
       />
       <SchedulesManager
-        classes={[...config.classes]}
-        sections={[...config.sections]}
+        classes={[...school.classes]}
+        sections={[...school.sections]}
         teachers={teachers}
         clubs={clubs.map((c) => ({ id: c.id, name: c.name, members: c.members, activities: c.activities }))}
         remedial={remedial.map((r) => ({ id: r.id, category: r.category, className: r.className, section: r.section, day: r.day, startTime: r.startTime, endTime: r.endTime, activity: r.activity, teacherName: r.teacherName }))}

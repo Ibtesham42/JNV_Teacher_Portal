@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
+import { logActivity } from "@/lib/audit";
 import { parseJson, requireAdmin, requireUser, route } from "@/lib/security/api";
 import { teacherInput } from "@/lib/validation";
 
@@ -25,8 +26,9 @@ export const GET = route(async (req: NextRequest) => {
 });
 
 export const POST = route(async (req: NextRequest) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const data = await parseJson(req, teacherInput);
   const teacher = await db.teacher.create({ data });
+  await logActivity(admin, { action: "teacher.create", entityType: "Teacher", entityId: teacher.id, summary: `Added teacher "${teacher.name}".`, newValue: teacher });
   return { teacher };
 });

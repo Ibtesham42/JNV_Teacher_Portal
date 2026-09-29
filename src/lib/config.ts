@@ -1,25 +1,10 @@
 import path from "node:path";
 
-function list(value: string | undefined, fallback: string[]): string[] {
-  if (!value) return fallback;
-  return value
-    .split(",")
-    .map((v) => v.trim())
-    .filter(Boolean);
-}
-
+/** School identity (name, address, portal title, exam sheet URL, classes, sections) lives in
+ *  the SchoolSettings table now - see src/lib/settings.ts::getSchoolSettings(). It's editable
+ *  from Admin -> School Settings without a code change or redeploy. */
 export const config = {
-  schoolName: "JAWAHAR NAVODAYA VIDYALAYA",
-  schoolAddress: "RYMBAI, EAST JAINTIA HILLS, MEGHALAYA",
-  portalName: "Teacher Routine Portal",
-  /** Google Sheet with the Term 1 (2026-27) mark slips and all PWT / Term sheets. */
-  examSheetUrl:
-    process.env.EXAM_SHEET_URL ||
-    "https://docs.google.com/spreadsheets/d/1Vj61zHzuVegLPWV-WrglT0leQE87-qCa/edit?gid=1502158322#gid=1502158322",
   timezone: process.env.SCHOOL_TZ || "Asia/Kolkata",
-  /** Classes the school runs (used for validation and the class picker). */
-  classes: list(process.env.SCHOOL_CLASSES, ["VI", "VII", "VIII", "IX", "X", "XI", "XII"]),
-  sections: list(process.env.SCHOOL_SECTIONS, ["A", "B", "C", "D", "E", "F"]),
   maxPeriodNumber: 12,
   /** Vercel rejects request bodies over ~4.5 MB, so set MAX_UPLOAD_MB=4 there. */
   maxUploadBytes: Math.max(1, Number(process.env.MAX_UPLOAD_MB || 25)) * 1024 * 1024,

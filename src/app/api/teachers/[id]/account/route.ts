@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { logActivity } from "@/lib/audit";
 import { HttpError, parseJson, requireAdmin, route } from "@/lib/security/api";
 import { accountInput } from "@/lib/validation";
 
@@ -8,7 +9,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 /** Create a teacher's login, or reset its password. */
 export const POST = route<Ctx>(async (req: NextRequest, { params }) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const { id } = await params;
   const input = await parseJson(req, accountInput);
   const teacher = await db.teacher.findUnique({ where: { id }, include: { user: true } });
@@ -22,6 +23,7 @@ export const POST = route<Ctx>(async (req: NextRequest, { params }) => {
       where: { id: teacher.user.id },
       data: { username: input.username, passwordHash, mustChangePassword: input.mustChangePassword, active: teacher.active },
     });
+    await logActivity(admin, { action: "teacher.password_reset", entityType: "Teacher", entityId: id, summary: `Reset the login password for "${teacher.name}".` });
     return { ok: true, message: "Password reset." };
   }
   const taken = await db.user.findUnique({ where: { username: input.username } });
@@ -36,5 +38,6 @@ export const POST = route<Ctx>(async (req: NextRequest, { params }) => {
       mustChangePassword: input.mustChangePassword,
     },
   });
+  await logActivity(admin, { action: "teacher.login_created", entityType: "Teacher", entityId: id, summary: `Created a login ("${input.username}") for "${teacher.name}".` });
   return { ok: true, message: "Login created." };
 });

@@ -367,3 +367,38 @@ model StoredFile {
   data      Bytes
   createdAt DateTime @default(now())
 }
+
+// ---------------------------------------------------------------- admin CMS
+
+/// Single row holding school identity/branding that used to be hardcoded.
+model SchoolSettings {
+  id            String   @id @default("singleton")
+  schoolName    String
+  schoolAddress String
+  portalName    String
+  examSheetUrl  String
+  classes       String[]
+  sections      String[]
+  contactPhone  String?
+  contactEmail  String?
+  footerText    String?
+  updatedAt     DateTime @updatedAt
+}
+
+/// General "who changed what, when" trail for admin actions (separate from the
+/// per-document ExtractionLog, which only covers the OCR/AI extraction pipeline).
+model ActivityLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorName  String
+  action     String
+  entityType String
+  entityId   String?
+  summary    String
+  oldValue   Json?
+  newValue   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, createdAt])
+  @@index([createdAt])
+}

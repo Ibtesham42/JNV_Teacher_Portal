@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { db } from "@/lib/db";
+import { logActivity } from "@/lib/audit";
 import { HttpError, parseJson, requireAdmin, requireUser, route } from "@/lib/security/api";
 import { dateFromISO, isoFromDate, todayISO, weekdayOfISO } from "@/lib/time";
 import { modInput } from "@/lib/validation";
@@ -19,12 +20,16 @@ export const GET = route(async (req: NextRequest) => {
 
 /** Assign one or more teachers as MOD on one or more dates. */
 export const POST = route(async (req: NextRequest) => {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const input = await parseJson(req, modInput);
   const teachers = await db.teacher.findMany({ where: { id: { in: input.teacherIds }, active: true } });
   if (teachers.length !== new Set(input.teacherIds).size) throw new HttpError(422, "One of the teachers was not found.");
+  const dates = [...new Set(input.dates)];
+  const before = await db.modDuty.findMany({
+    where: { date: { in: dates.map(dateFromISO) }, teacherId: { in: teachers.map((t) => t.id) }, dutyType: input.dutyType },
+  });
   let count = 0;
-  for (const date of new Set(input.dates)) {
+  for (const date of dates) {
     for (const t of teachers) {
       await db.modDuty.upsert({
         where: { date_teacherId_dutyType: { date: dateFromISO(date), teacherId: t.id, dutyType: input.dutyType } },
@@ -34,5 +39,12 @@ export const POST = route(async (req: NextRequest) => {
       count++;
     }
   }
+  await logActivity(admin, {
+    action: "mod.assign",
+    entityType: "ModDuty",
+    summary: `Assigned ${input.dutyType === "HOLIDAY" ? "Sunday/holiday duty" : "MOD duty"} to ${teachers.map((t) => t.name).join(", ")} on ${dates.join(", ")}.`,
+    oldValue: before.map((m) => ({ date: isoFromDate(m.date), teacherName: m.teacherName })),
+    newValue: { dates, teachers: teachers.map((t) => t.name), dutyDescription: input.dutyDescription },
+  });
   return { ok: true, count };
 });

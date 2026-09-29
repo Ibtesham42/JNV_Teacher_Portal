@@ -85,3 +85,17 @@ export const uploadFields = z.object({
 });
 
 export const searchQuery = z.object({ q: z.string().trim().min(1).max(80) });
+
+export const schoolSettingsPatch = z.object({
+  schoolName: text(160).min(2).optional(),
+  schoolAddress: text(200).min(2).optional(),
+  portalName: text(80).min(2).optional(),
+  examSheetUrl: z.string().trim().url().max(500).optional(),
+  classes: z.array(text(10).min(1)).min(1).max(20).optional(),
+  sections: z.array(text(3).min(1)).max(20).optional(),
+  contactPhone: text(30).nullish().transform((v) => v || null),
+  contactEmail: z.string().trim().email().max(120).nullish().transform((v) => v || null),
+  footerText: text(300).nullish().transform((v) => v || null),
+});
+
+export const subjectInput = z.object({ name: text(80).min(1, "Name is required") });

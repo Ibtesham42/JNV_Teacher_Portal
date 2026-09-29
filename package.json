@@ -14,6 +14,7 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "node prisma/seed.mjs",
+    "db:backfill-settings": "node scripts/backfill-settings.mjs",
     "db:studio": "prisma studio",
     "sample": "node scripts/make-sample.mjs",
     "e2e": "node scripts/e2e.mjs",

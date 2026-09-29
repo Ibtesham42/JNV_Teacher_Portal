@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CalendarOff, ClipboardCheck, FilePlus2, Megaphone, Upload, Users } from "lucide-react";
+import { CalendarOff, ClipboardCheck, FilePlus2, Megaphone, Settings, Upload, Users } from "lucide-react";
 import { PageHeader, Pill, StatCard } from "@/components/ui";
 import { db } from "@/lib/db";
 import { getActiveRoutine, getDashboardCounts, getModForDate, getWeeklyOffByDay } from "@/lib/queries";
@@ -66,6 +66,7 @@ export default async function AdminDashboard() {
             { href: "/admin/mod", label: "Manage MOD", icon: ClipboardCheck },
             { href: "/admin/weekly-off", label: "Manage Weekly Off", icon: CalendarOff },
             { href: "/admin/notices", label: "Manage Notices", icon: Megaphone },
+            { href: "/admin/settings", label: "School Settings", icon: Settings },
           ].map((a) => (
             <Link key={a.href} href={a.href} className="card card-pad flex flex-col items-center gap-2 text-center text-sm font-semibold text-brand-800 transition hover:border-brand-400 hover:shadow-md">
               <a.icon className="h-6 w-6" />

@@ -5,6 +5,7 @@ import { draftDataSchema } from "@/lib/extraction/schema";
 import { failStaleExtractions } from "@/lib/extraction/pipeline";
 import { loadRoutineBusy, loadTeachers } from "@/lib/extraction/publish";
 import { validateDraft } from "@/lib/extraction/validate";
+import { getSchoolSettings } from "@/lib/settings";
 import { HttpError, requireAdmin, route } from "@/lib/security/api";
 import { z } from "zod";
 
@@ -26,7 +27,7 @@ export const GET = route<Ctx>(async (_req, { params }) => {
   let validation = null;
   if (raw && (doc.draft.status === "REVIEW" || doc.draft.status === "PUBLISHED")) {
     data = draftDataSchema.parse(raw);
-    validation = validateDraft(data, await loadTeachers(), await loadRoutineBusy(data));
+    validation = validateDraft(data, await loadTeachers(), await loadRoutineBusy(data), await getSchoolSettings());
   }
   return {
     document: {
@@ -60,6 +61,6 @@ export const PUT = route<Ctx>(async (req: NextRequest, { params }) => {
     data: { data: parsed.data.data as unknown as Prisma.InputJsonValue, status: "REVIEW", stage: "Review", errorMessage: null },
   });
   if (draft.status === "FAILED") await db.uploadedDocument.update({ where: { id }, data: { extractionStatus: "REVIEW" } });
-  const validation = validateDraft(parsed.data.data, await loadTeachers(), await loadRoutineBusy(parsed.data.data));
+  const validation = validateDraft(parsed.data.data, await loadTeachers(), await loadRoutineBusy(parsed.data.data), await getSchoolSettings());
   return { ok: true, validation };
 });

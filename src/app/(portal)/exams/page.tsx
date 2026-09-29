@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import { ExternalLink, FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/ui";
-import { config } from "@/lib/config";
+import { getSchoolSettings } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "Exams" };
 
 const SHEETS = ["PWT 1", "PWT 2", "PWT 3", "PWT 4", "PWT 5", "Term 1", "Term 2"];
 
-export default function ExamsPage() {
+export default async function ExamsPage() {
+  const school = await getSchoolSettings();
   return (
     <div>
       <PageHeader title="Exams" subtitle="Mark slips and exam sheets for the session 2026-27" />
@@ -32,7 +33,7 @@ export default function ExamsPage() {
             </ul>
           </div>
           <a
-            href={config.examSheetUrl}
+            href={school.examSheetUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 py-3 text-sm font-bold text-white shadow-card transition hover:bg-brand-800 active:scale-95"
