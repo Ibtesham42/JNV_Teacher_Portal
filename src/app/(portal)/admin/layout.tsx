@@ -17,6 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           { href: "/admin/notices", label: "Notices", match: "/admin/notices" },
           { href: "/admin/schedules", label: "Clubs & Remedial", match: "/admin/schedules" },
           { href: "/admin/subjects", label: "Subjects", match: "/admin/subjects" },
+          { href: "/admin/workload", label: "Workload", match: "/admin/workload" },
           { href: "/admin/generate", label: "Generate roster", match: "/admin/generate" },
           { href: "/admin/storage", label: "Storage", match: "/admin/storage" },
           { href: "/admin/settings", label: "School Settings", match: "/admin/settings" },

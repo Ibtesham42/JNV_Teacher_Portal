@@ -19,6 +19,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       sections={[...school.sections]}
       lowConfidence={config.lowConfidence}
       activeVersion={active?.version ?? null}
+      activeRoutineId={active?.id ?? null}
     />
   );
 }

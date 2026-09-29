@@ -4,6 +4,7 @@ import ActionButton from "@/components/ActionButton";
 import { Empty, PageHeader, Pill } from "@/components/ui";
 import { db } from "@/lib/db";
 import { formatDateShort, isoFromDate } from "@/lib/time";
+import CompareForm from "./CompareForm";
 
 export const metadata: Metadata = { title: "Routine versions" };
 export const dynamic = "force-dynamic";
@@ -20,6 +21,9 @@ export default async function RoutineVersions() {
         subtitle="Only one version is ACTIVE. A version with a future start date is SCHEDULED and switches on by itself that day."
         actions={<Link href="/admin/upload?kind=ROUTINE" className="btn btn-primary">Upload new routine</Link>}
       />
+      <div className="mb-5">
+        <CompareForm routines={routines.map((r) => ({ id: r.id, version: r.version, title: r.title }))} />
+      </div>
       {routines.length ? (
         <div className="card overflow-x-auto">
           <table className="w-full min-w-[860px] text-sm">

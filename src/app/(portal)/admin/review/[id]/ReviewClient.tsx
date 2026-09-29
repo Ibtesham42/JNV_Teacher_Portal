@@ -37,12 +37,14 @@ export default function ReviewClient({
   sections,
   lowConfidence,
   activeVersion,
+  activeRoutineId,
 }: {
   id: string;
   classes: string[];
   sections: string[];
   lowConfidence: number;
   activeVersion: number | null;
+  activeRoutineId: string | null;
 }) {
   const [resp, setResp] = useState<ReviewResponse | null>(null);
   const [loadError, setLoadError] = useState("");
@@ -54,7 +56,7 @@ export default function ReviewClient({
   const [saveError, setSaveError] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [pubError, setPubError] = useState("");
-  const [published, setPublished] = useState<{ version?: number; message: string } | null>(null);
+  const [published, setPublished] = useState<{ version?: number; message: string; routineId?: string } | null>(null);
   const [compare, setCompare] = useState(false);
   const [busy, setBusy] = useState(false);
   const [effectiveFrom, setEffectiveFrom] = useState("");
@@ -170,8 +172,8 @@ export default function ReviewClient({
     if (!ok) return;
     setPublishing(true);
     try {
-      const r = await api<{ message: string; version?: number }>(`/api/extraction/${id}/publish`, { method: "POST", json: { data: dataRef.current, ...(later ? { effectiveFrom } : {}) } });
-      setPublished({ message: r.message, version: r.version });
+      const r = await api<{ message: string; version?: number; routineId?: string }>(`/api/extraction/${id}/publish`, { method: "POST", json: { data: dataRef.current, ...(later ? { effectiveFrom } : {}) } });
+      setPublished({ message: r.message, version: r.version, routineId: r.routineId });
       setSaveState("saved");
     } catch (e) {
       const err = e as Error & { details?: { message: string }[] };
@@ -265,6 +267,11 @@ export default function ReviewClient({
             <Link href="/routine/class" className="btn btn-secondary">View routine</Link>
             <Link href="/admin/mod" className="btn btn-secondary">Manage MOD</Link>
             <Link href="/admin/weekly-off" className="btn btn-secondary">Manage weekly off</Link>
+            {published?.routineId && activeRoutineId && activeRoutineId !== published.routineId && (
+              <Link href={`/admin/routines/diff?from=${activeRoutineId}&to=${published.routineId}`} className="btn btn-secondary">
+                What changed since v{activeVersion}?
+              </Link>
+            )}
           </div>
         </div>
       </div>
